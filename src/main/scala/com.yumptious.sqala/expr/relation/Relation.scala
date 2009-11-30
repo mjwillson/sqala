@@ -26,6 +26,7 @@ trait RelExpr extends Expr {
   def asFromExpr : FromExpr
   def asSelect : SelectExpr = new SelectExpr(columns, asFromExpr)
   
+  def select(columns : NamedColExpr[_]*) = new SelectExpr(columns, asFromExpr)
   def where(condition : ColExpr[Boolean]) : SelectExpr = new SelectExpr(columns, asFromExpr, condition)
   
   def join(other : RelExpr) = new ProductFromExpr(asFromExpr, other.asFromExpr)
@@ -37,6 +38,9 @@ trait RelExpr extends Expr {
   def join(other : RelExpr, on : ColExpr[Boolean]) = innerJoin(other, on)
   def leftJoin(other : RelExpr, on : ColExpr[Boolean]) = leftOuterJoin(other, on)
   def rightJoin(other : RelExpr, on : ColExpr[Boolean]) = rightOuterJoin(other, on)
+  
+  def limit(theLimit : Int, offset : Int) : LimitedSelectExpr = asSelect.limit(theLimit, offset)
+  def limit(theLimit : Int) : LimitedSelectExpr = limit(theLimit, 0)
 }
 
 // A relational expression which is bound to a particular name.
