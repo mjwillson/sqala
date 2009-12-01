@@ -16,3 +16,7 @@ trait StringColExpr extends ColExpr[String] with StringOps {val self = this}
 class ConcatOp(a : ColExpr[String], b : ColExpr[String]) extends FunctionOp2[String,String,String]("CONCAT",a,b) with StringColExpr {}
 class ReplaceOp(a : ColExpr[String], b : ColExpr[String], c : ColExpr[String]) extends FunctionOp3[String,String,String,String]("REPLACE",a,b,c) with StringColExpr {}
 class LikeOp(a : ColExpr[String], b : ColExpr[String]) extends InfixBinaryOp[String,String,String]("LIKE",a,b) with StringColExpr {}
+
+class StringLiteral(val value : String) extends StringColExpr {
+  def toSQL = "'" + value.replace("\\", "\\\\").replace("'", "\\'") + "'"
+}

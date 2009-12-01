@@ -20,3 +20,7 @@ trait BooleanColExpr extends ColExpr[Boolean] with BooleanOps {val self = this}
 class AndOp(a : ColExpr[Boolean], b : ColExpr[Boolean]) extends InfixBinaryOp[Boolean,Boolean,Boolean]("and",a,b) with BooleanColExpr {}
 class OrOp(a : ColExpr[Boolean], b : ColExpr[Boolean]) extends InfixBinaryOp[Boolean,Boolean,Boolean]("or",a,b) with BooleanColExpr {}
 class NotOp(a : ColExpr[Boolean]) extends PrefixUnaryOp[Boolean,Boolean]("not", a) with BooleanColExpr {}
+
+class BooleanLiteral(val value : Boolean) extends BooleanColExpr {
+  def toSQL = value.toString
+}

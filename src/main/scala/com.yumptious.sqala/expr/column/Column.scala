@@ -38,11 +38,6 @@ class Column[A](val table : NamedRelExpr, val name : String) extends NamedColExp
   def toSQL = table.nameSQL + ".`" + name + "`"
 }
 
-// Wraps a literal value as a ColExpr. There's an implicit conversion for this. 
-class Literal[A](val value : A) extends ColExpr[A] {
-  def toSQL = value.toString // todo
-}
-
 class EqualsOp[A](a : ColExpr[A], b : ColExpr[A]) extends InfixBinaryOp[A,A,Boolean]("=",a,b) with BooleanColExpr {}
 class NotEqualsOp[A](a : ColExpr[A], b : ColExpr[A]) extends InfixBinaryOp[A,A,Boolean]("!=",a,b) with BooleanColExpr {}
 class LessThanOp[A](a : ColExpr[A], b : ColExpr[A]) extends InfixBinaryOp[A,A,Boolean]("<",a,b) with BooleanColExpr {}
