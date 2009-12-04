@@ -11,7 +11,9 @@ trait ColExpr[A] extends Expr {
   override def toString = toSQL
   
   def is(other : ColExpr[A]) = new EqualsOp(this, other)
+  def ===(other : ColExpr[A]) = new EqualsOp(this, other)
   def isNot(other : ColExpr[A]) = new NotEqualsOp(this, other)
+  def !==(other : ColExpr[A]) = new NotEqualsOp(this, other)
   def <(other : ColExpr[A]) = new LessThanOp(this, other)
   def <=(other : ColExpr[A]) = new LessThanEqualsOp(this, other)
   def >(other : ColExpr[A]) = new GreaterThanOp(this, other)
@@ -36,6 +38,13 @@ class AliasColExpr[A](val colExpr : ColExpr[A], val name : String) extends Named
 // Used (for example) for a column of a table, or of a named subquery
 class Column[A](val table : NamedRelExpr, val name : String) extends NamedColExpr[A] {
   def toSQL = table.nameSQL + ".`" + name + "`"
+  
+  // Assignment expression of a value ColExpr to a Column. For use with Insert and Update
+  def :=[V <: ColExpr[A]](value : V) = new ColumnAssignment[A, V](this, value)
+  /* this would be covered by the above, it's just given so that an implicit Literal can be
+     inferred for eg "Table.id := 3". The type V <: ColExpr[A] doesn't seem to
+     allow the implicit to be inferred in this case in 2.7.7 */
+  def :=(value : Literal[A]) = new ColumnAssignment[A, Literal[A]](this, value)
 }
 
 class EqualsOp[A](a : ColExpr[A], b : ColExpr[A]) extends InfixBinaryOp[A,A,Boolean]("=",a,b) with BooleanColExpr {}

@@ -12,11 +12,11 @@ object Implicits {
 
   implicit def stringOps(b : ColExpr[String]) : StringOps = new StringOps {val self = b}
 
-  implicit def stringLiteral(a : String) : StringLiteral = new StringLiteral(a)
-  implicit def booleanLiteral(a : Boolean) : BooleanLiteral = new BooleanLiteral(a)
-  implicit def shortLiteral(a : Short) : NumericLiteral[Short] = new NumericLiteral(a)
-  implicit def intLiteral(a : Int) : NumericLiteral[Int] = new NumericLiteral[Int](a)
-  implicit def longLiteral(a : Long) : NumericLiteral[Long] = new NumericLiteral[Long](a)
-  implicit def floatLiteral(a : Float) : NumericLiteral[Float] = new NumericLiteral[Float](a)
-  implicit def doubleLiteral(a : Double) : NumericLiteral[Double] = new NumericLiteral[Double](a)
+  implicit def stringLiteral(a : String) : Literal[String] = new StringLiteral(a)
+  implicit def booleanLiteral(a : Boolean) : Literal[Boolean] = new BooleanLiteral(a)
+  implicit def shortLiteral(a : Short) : Literal[Short] = new NumericLiteral(a)
+  implicit def intLiteral(a : Int) : Literal[Int] = new NumericLiteral[Int](a)
+  implicit def longLiteral(a : Long) : Literal[Long] = new NumericLiteral[Long](a)
+  implicit def floatLiteral(a : Float) : Literal[Float] = new NumericLiteral[Float](a)
+  implicit def doubleLiteral(a : Double) : Literal[Double] = new NumericLiteral[Double](a)
 }

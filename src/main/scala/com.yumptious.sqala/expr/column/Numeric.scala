@@ -20,7 +20,3 @@ class MinusOp[A](a : ColExpr[A], b : ColExpr[A]) extends InfixBinaryOp[A,A,A]("-
 class TimesOp[A](a : ColExpr[A], b : ColExpr[A]) extends InfixBinaryOp[A,A,A]("*",a,b) with NumericColExpr[A] {}
 class DivideOp[A](a : ColExpr[A], b : ColExpr[A]) extends InfixBinaryOp[A,A,A]("/",a,b) with NumericColExpr[A] {}
 class UnaryMinusOp[A](a : ColExpr[A]) extends PrefixUnaryOp[A,A]("-",a) with NumericColExpr[A] {}
-
-class NumericLiteral[A](val value : A) extends NumericColExpr[A] {
-  def toSQL = value.toString
-}

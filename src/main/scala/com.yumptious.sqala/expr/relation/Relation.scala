@@ -2,6 +2,7 @@ package com.yumptious.sqala.expr.relation
 
 import com.yumptious.sqala.expr._
 import com.yumptious.sqala.expr.column._
+import com.yumptious.sqala.expr.command._
 
 // Abstract trait for a relational (in as much as SQL is truly relational) expression.
 // More pragmatically: something which can be wrapped up and executed as an SQL select
@@ -41,6 +42,10 @@ trait RelExpr extends Expr {
   
   def limit(theLimit : Int, offset : Int) : LimitedSelectExpr = asSelect.limit(theLimit, offset)
   def limit(theLimit : Int) : LimitedSelectExpr = limit(theLimit, 0)
+
+  def update(pairs : ColumnAssignment[_, _]*) = new Update(asFromExpr, pairs, null)
+  def delete() = new Delete(asFromExpr, null)
+  def delete(tables : NamedRelExpr*) = new Delete(asFromExpr, tables, null)
 }
 
 // A relational expression which is bound to a particular name.
@@ -53,5 +58,7 @@ trait NamedRelExpr extends RelExpr with NamedExpr {
 class AliasedRelExpr(val relExpr : RelExpr, val name : String) extends NamedRelExpr {
   def toSQL = relExpr.toSQL
   def columns = relExpr.columns.map(_ asColumnOf this)
-  def getColumn[A](name : String) = relExpr.getColumn[A](name).map(_ asColumnOf this)
+  def getColumn[A](name : String) : Option[Column[A]] = relExpr.getColumn[A](name).map(_ asColumnOf this)
+  // override to specialise the return type:
+  override def column[A](name : String) : Column[A] = getColumn[A](name).get
 }

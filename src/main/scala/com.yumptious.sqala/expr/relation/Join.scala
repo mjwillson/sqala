@@ -7,6 +7,7 @@ import com.yumptious.sqala.expr.column._
 // Consists of some tree of joins (including ", " the cartesian product join) between NamedRelExpr's.
 trait FromExpr extends RelExpr {
   def asFromExpr = this
+  def tables : Seq[NamedRelExpr]
 }
 
 // Wraps a single NamedRelExpr as a FromExpr
@@ -14,6 +15,7 @@ class NamedRelFromExpr(val table : NamedRelExpr) extends FromExpr {
   def toSQL = table.bindingToNameSQL
   def columns = table.columns
   def getColumn[A](name : String) = table.getColumn[A](name)
+  def tables = Seq(table)
 }
 
 // FromExpr which joins two tables.
@@ -22,6 +24,7 @@ class ProductFromExpr(val left : FromExpr, val right : FromExpr) extends FromExp
   def toSQL = left.toSQL + ", " + right.toSQL
   def columns = left.columns ++ right.columns
   def getColumn[A](name : String) = left.getColumn[A](name) orElse right.getColumn[A](name)
+  def tables = left.tables ++ right.tables
 }
 
 // A join with an 'on' clause

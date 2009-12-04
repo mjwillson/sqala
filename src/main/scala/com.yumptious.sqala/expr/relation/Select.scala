@@ -2,6 +2,7 @@ package com.yumptious.sqala.expr.relation
 
 import com.yumptious.sqala.expr._
 import com.yumptious.sqala.expr.column._
+import com.yumptious.sqala.expr.command._
 
 // An SQL select statement.
 // Selects a number of NamedColExpr's from a FromExpr.
@@ -28,6 +29,10 @@ class SelectExpr(
     val newWhere = if (whereCond eq null) condition else new AndOp(whereCond, condition)
     new SelectExpr(columns, from, newWhere, orderBy)
   }
+  
+  override def update(pairs : ColumnAssignment[_, _]*) = new Update(from, pairs, whereCond)
+  override def delete() = new Delete(from, whereCond)
+  override def delete(tables : NamedRelExpr*) = new Delete(from, tables, whereCond)
   
   override def limit(limit : Int, offset : Int) = new LimitedSelectExpr(columns, from, whereCond, orderBy, limit, offset)
   
