@@ -40,6 +40,25 @@ trait RelExpr extends Expr {
   def leftJoin(other : RelExpr, on : ColExpr[Boolean]) = leftOuterJoin(other, on)
   def rightJoin(other : RelExpr, on : ColExpr[Boolean]) = rightOuterJoin(other, on)
   
+  def groupBy(groupByColumns : NamedColExpr[_]*) = new AggregateSelectExpr(groupByColumns, groupByColumns, asFromExpr, null, null, null)
+  def selectGroupedBy(columns : Seq[NamedColExpr[_]], groupByColumns : Seq[NamedColExpr[_]]) : AggregateSelectExpr = {
+    new AggregateSelectExpr(groupByColumns, columns, asFromExpr, null, null, null)
+  }
+  def selectGroupedBy(c : NamedColExpr[_], gc : NamedColExpr[_]) : AggregateSelectExpr = selectGroupedBy(Seq(c), Seq(gc))
+  def selectGroupedBy(cs : Seq[NamedColExpr[_]], gc : NamedColExpr[_]) : AggregateSelectExpr = selectGroupedBy(cs, Seq(gc))
+  def selectGroupedBy(c : NamedColExpr[_], gcs : Seq[NamedColExpr[_]]) : AggregateSelectExpr = selectGroupedBy(Seq(c), gcs)
+  
+  def selectAggregate(aggregateColumns : NamedColExpr[_]*) = selectGroupedBy(aggregateColumns, null : Seq[NamedColExpr[_]])
+
+  // TODO: overridden versions allowing the column name to be specified
+  def selectCount = selectAggregate(CountAll.as("count"))
+  def selectCountDistinct(columns : ColExpr[_]*) = selectAggregate(Aggregates.countDistinct(columns : _*).as("count"))
+  def selectMax[A](column : ColExpr[A]) = selectAggregate(Aggregates.max(column).as("max"))
+  def selectMin[A](column : ColExpr[A]) = selectAggregate(Aggregates.min(column).as("min"))
+  def selectSum[A](column : ColExpr[A]) = selectAggregate(Aggregates.sum(column).as("sum"))
+  def selectAvg[A](column : ColExpr[A]) = selectAggregate(Aggregates.avg(column).as("avg"))
+  def selectStdDev[A](column : ColExpr[A]) = selectAggregate(Aggregates.stdDev(column).as("stdDev"))
+  
   def limit(theLimit : Int, offset : Int) : LimitedSelectExpr = asSelect.limit(theLimit, offset)
   def limit(theLimit : Int) : LimitedSelectExpr = limit(theLimit, 0)
 

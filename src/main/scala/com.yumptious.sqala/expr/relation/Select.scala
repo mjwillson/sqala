@@ -29,6 +29,16 @@ class SelectExpr(
     val newWhere = if (whereCond eq null) condition else new AndOp(whereCond, condition)
     new SelectExpr(columns, from, newWhere, orderBy)
   }
+
+  override def groupBy(groupByColumns : NamedColExpr[_]*) = {
+    new AggregateSelectExpr(groupByColumns, groupByColumns, from, whereCond, null, orderBy)
+  }
+
+  override def selectGroupedBy(columns : Seq[NamedColExpr[_]], groupByColumns : Seq[NamedColExpr[_]]) = {
+    new AggregateSelectExpr(groupByColumns, columns, from, whereCond, null, orderBy)
+  }
+
+  
   
   override def update(pairs : ColumnAssignment[_, _]*) = new Update(from, pairs, whereCond)
   override def delete() = new Delete(from, whereCond)
@@ -40,10 +50,12 @@ class SelectExpr(
   
   def getColumn[A](name : String) = columnMap.get(name).asInstanceOf[Option[NamedColExpr[A]]]
   
+  protected def whereSQL = if (whereCond eq null) "" else " WHERE " + whereCond.toSQL
+  protected def orderSQL = if (orderBy eq null) "" else " ORDER BY " + orderBy.mkString(", ")
+  protected def columnsSQL = columns.map(_.bindingToNameSQL).mkString(", ")
+  
   def toSQL = {
-    val whereSQL = if (whereCond eq null) "" else " WHERE " + whereCond.toSQL
-    val orderSQL = if (orderBy eq null) "" else " ORDER BY " + orderBy.mkString(", ")
-    "SELECT " + columns.map(_.bindingToNameSQL).mkString(", ") + " FROM " + from.toSQL + whereSQL + orderSQL
+    "SELECT " + columnsSQL + " FROM " + from.toSQL + whereSQL + orderSQL
   }
 }
 
