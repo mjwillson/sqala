@@ -5,7 +5,7 @@ package com.yumptious.sqala.expr.column
 abstract class UnaryOp[A,B](a : ColExpr[A]) extends Tuple1[ColExpr[A]](a) with ColExpr[B] {}
 abstract class BinaryOp[A,B,C](a : ColExpr[A], b : ColExpr[B]) extends (ColExpr[A],ColExpr[B])(a,b) with ColExpr[C] {}
 abstract class InfixBinaryOp[A,B,C](val name : String, a : ColExpr[A], b : ColExpr[B]) extends BinaryOp[A,B,C](a,b) {
-  def toSQL = _1.toSQL + " " + name + " " + _2.toSQL
+  def toSQL = "(" + _1.toSQL + " " + name + " " + _2.toSQL + ")"
 }
 
 trait FunctionOp extends Product {
