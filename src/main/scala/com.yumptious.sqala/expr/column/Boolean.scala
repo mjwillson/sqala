@@ -3,20 +3,18 @@ package com.yumptious.sqala.expr.column
 // Expressions applying to Boolean columns.
 // an implicit conversion will give you BooleanOps on a ColExpr[Boolean]
 
-trait BooleanOps {
-  protected val self : ColExpr[Boolean]
+trait BooleanOps[N <: NullStatus] {
+  protected val self : ColExpr[Boolean,N]
 
-  def and(other : ColExpr[Boolean]) = new AndOp(self, other)
-  def or(other : ColExpr[Boolean]) = new OrOp(self, other)
-  def not() = new NotOp(self)
+  def and[ON <: NullStatus](other : ColExpr[Boolean,ON]) = new AndOp[N,ON](self, other)
+  def or[ON <: NullStatus](other : ColExpr[Boolean,ON]) = new OrOp[N,ON](self, other)
+  def not() = new NotOp[N](self)
 
-  def &&(other : ColExpr[Boolean]) = new AndOp(self, other)
-  def ||(other : ColExpr[Boolean]) = new OrOp(self, other)
-  def unary_!() = new NotOp(self)
+  def &&[ON <: NullStatus](other : ColExpr[Boolean,ON]) = new AndOp[N,ON](self, other)
+  def ||[ON <: NullStatus](other : ColExpr[Boolean,ON]) = new OrOp[N,ON](self, other)
+  def unary_!() = new NotOp[N](self)
 }
 
-trait BooleanColExpr extends ColExpr[Boolean] with BooleanOps {val self = this}
-
-class AndOp(a : ColExpr[Boolean], b : ColExpr[Boolean]) extends InfixBinaryOp[Boolean,Boolean,Boolean]("and",a,b) with BooleanColExpr {}
-class OrOp(a : ColExpr[Boolean], b : ColExpr[Boolean]) extends InfixBinaryOp[Boolean,Boolean,Boolean]("or",a,b) with BooleanColExpr {}
-class NotOp(a : ColExpr[Boolean]) extends PrefixUnaryOp[Boolean,Boolean]("not", a) with BooleanColExpr {}
+class AndOp[AN <: NullStatus,BN <: NullStatus](a : ColExpr[Boolean,AN], b : ColExpr[Boolean,BN]) extends InfixBinaryOp[Boolean,AN,Boolean,BN,Boolean]("AND",a,b) {}
+class OrOp[AN <: NullStatus,BN <: NullStatus](a : ColExpr[Boolean,AN], b : ColExpr[Boolean,BN]) extends InfixBinaryOp[Boolean,AN,Boolean,BN,Boolean]("OR",a,b) {}
+class NotOp[AN <: NullStatus](a : ColExpr[Boolean,AN]) extends PrefixUnaryOp[Boolean,AN,Boolean]("NOT", a) {}

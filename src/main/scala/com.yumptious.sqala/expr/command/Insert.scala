@@ -11,7 +11,7 @@ import com.yumptious.sqala.expr.column._
    will take care of ensuring that A and B match.
    ColumnAssignment[_, Literal[_]] doesn't work either.
    All seems to relate to this bug: http://lampsvn.epfl.ch/trac/scala/ticket/2765 */
-class Insert(val table : Table, val pairs : Seq[ColumnAssignment[A, Literal[B]] forSome {type A; type B}]) extends Command {
+class Insert(val table : Table, val pairs : Seq[ColumnAssignment[A,NA,Literal[B,NB]] forSome {type A; type NA <: NullStatus; type B; type NB <: NullStatus}]) extends Command {
   def toSQL = {
     val colsSQL = pairs.map(_.column.toSQL).mkString(" (", ", ", ")")
     val valsSQL = pairs.map(_.value.toSQL).mkString("(", ", ", ")")

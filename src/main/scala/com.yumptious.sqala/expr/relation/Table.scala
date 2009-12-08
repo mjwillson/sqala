@@ -10,21 +10,21 @@ import com.yumptious.sqala.expr.command._
 abstract class Table(val name : String) extends NamedRelExpr {
   def toSQL = "`"+name+"`"
 
-  private var columnList : List[Column[_]] = Nil
-  private var columnMap  : Map[String,Column[_]] = Map()
+  private var columnList : List[Column[_,_ <: NullStatus]] = Nil
+  private var columnMap  : Map[String,Column[_,_ <: NullStatus]] = Map()
 
-  def columns : List[Column[_]] = columnList
-  override def column[A](name : String) : Column[A] = getColumn[A](name).get
-  def getColumn[A](name : String) : Option[Column[A]] = columnMap.get(name).asInstanceOf[Option[Column[A]]]
-  
-  protected def makeColumn[A](name : String) = {
-    val col = new Column[A](this, name)
+  def columns : List[Column[_,_ <: NullStatus]] = columnList
+  override def column[A,N <: NullStatus](name : String) : Column[A,N] = getColumn[A,N](name).get
+  def getColumn[A,N <: NullStatus](name : String) : Option[Column[A,N]] = columnMap.get(name).asInstanceOf[Option[Column[A,N]]]
+
+  protected def makeColumn[A,N <: NullStatus](name : String) = {
+    val col = new Column[A,N](this, name)
     columnList ::= col
     columnMap += (name -> col)
     col
   }
-  
+
   override def as(name : String) = new AliasedRelExpr(this, name)
-  
-  def insert(pairs : ColumnAssignment[A, Literal[B]] forSome {type A; type B}*) = new Insert(this, pairs)
+
+  def insert(pairs : ColumnAssignment[A,NA,Literal[B,NB]] forSome {type A; type NA <: NullStatus; type B; type NB <: NullStatus}*) = new Insert(this, pairs)
 }

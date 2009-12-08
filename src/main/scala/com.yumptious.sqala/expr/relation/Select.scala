@@ -9,51 +9,51 @@ import com.yumptious.sqala.expr.command._
 // May optionally include a ColExpr[Boolean] where clause condition,
 // some OrderExpr's to order by
 class SelectExpr(
-    val columns   : Seq[NamedColExpr[_]],
+    val columns   : Seq[NamedColExpr[_,_ <: NullStatus]],
     val from      : FromExpr,
-    val whereCond : ColExpr[Boolean],
+    val whereCond : ColExpr[Boolean,MaybeNull],
     val orderBy   : Seq[OrderExpr]
   ) extends RelExpr {
 
-  def this(columns : Seq[NamedColExpr[_]], from : FromExpr, whereCond : ColExpr[Boolean]) = this(columns, from, whereCond, null)
-  def this(columns : Seq[NamedColExpr[_]], from : FromExpr) = this(columns, from, null, null)
-  
+  def this(columns : Seq[NamedColExpr[_,_ <: NullStatus]], from : FromExpr, whereCond : ColExpr[Boolean,MaybeNull]) = this(columns, from, whereCond, null)
+  def this(columns : Seq[NamedColExpr[_,_ <: NullStatus]], from : FromExpr) = this(columns, from, null, null)
+
   // select statement has to be wrapped as a named subquery before it can be used in the from expression of another select:
   def asFromExpr = as(FreshNames.getName).asFromExpr
 
   override def asSelect = this
-  
-  override def select(columns : NamedColExpr[_]*) = new SelectExpr(columns, from, whereCond, orderBy)
-  
-  override def where(condition : ColExpr[Boolean]) = {
+
+  override def select(columns : NamedColExpr[_,_ <: NullStatus]*) = new SelectExpr(columns, from, whereCond, orderBy)
+
+  override def where(condition : ColExpr[Boolean,MaybeNull]) = {
     val newWhere = if (whereCond eq null) condition else new AndOp(whereCond, condition)
     new SelectExpr(columns, from, newWhere, orderBy)
   }
 
-  override def groupBy(groupByColumns : NamedColExpr[_]*) = {
+  override def groupBy(groupByColumns : NamedColExpr[_,_ <: NullStatus]*) = {
     new AggregateSelectExpr(groupByColumns, groupByColumns, from, whereCond, null, orderBy)
   }
 
-  override def selectGroupedBy(columns : Seq[NamedColExpr[_]], groupByColumns : Seq[NamedColExpr[_]]) = {
+  override def selectGroupedBy(columns : Seq[NamedColExpr[_,_ <: NullStatus]], groupByColumns : Seq[NamedColExpr[_,_ <: NullStatus]]) = {
     new AggregateSelectExpr(groupByColumns, columns, from, whereCond, null, orderBy)
   }
 
-  
-  
-  override def update(pairs : ColumnAssignment[_, _]*) = new Update(from, pairs, whereCond)
+
+
+  override def update(pairs : ColumnAssignment[_, _, _]*) = new Update(from, pairs, whereCond)
   override def delete() = new Delete(from, whereCond)
   override def delete(tables : NamedRelExpr*) = new Delete(from, tables, whereCond)
-  
+
   override def limit(limit : Int, offset : Int) = new LimitedSelectExpr(columns, from, whereCond, orderBy, limit, offset)
-  
-  lazy private val columnMap : Map[String,NamedColExpr[_]] = Map(columns map {c => (c.name, c)} : _*)
-  
-  def getColumn[A](name : String) = columnMap.get(name).asInstanceOf[Option[NamedColExpr[A]]]
-  
+
+  lazy private val columnMap : Map[String,NamedColExpr[_,_ <: NullStatus]] = Map(columns map {c => (c.name, c)} : _*)
+
+  def getColumn[A,N <: NullStatus](name : String) = columnMap.get(name).asInstanceOf[Option[NamedColExpr[A,N]]]
+
   protected def whereSQL = if (whereCond eq null) "" else " WHERE " + whereCond.toSQL
   protected def orderSQL = if (orderBy eq null) "" else " ORDER BY " + orderBy.mkString(", ")
   protected def columnsSQL = columns.map(_.bindingToNameSQL).mkString(", ")
-  
+
   def toSQL = {
     "SELECT " + columnsSQL + " FROM " + from.toSQL + whereSQL + orderSQL
   }
@@ -61,7 +61,7 @@ class SelectExpr(
 
 // For use in SelectExpr:
 // A column expression with an ascending or descending qualifier.
-class OrderExpr(val colExpr : ColExpr[_], val asc : Boolean) extends Expr {
+class OrderExpr(val colExpr : ColExpr[_,_ <: NullStatus], val asc : Boolean) extends Expr {
   def toSQL = colExpr.toSQL + (if (asc) " ASC" else " DESC")
 }
 
@@ -71,11 +71,11 @@ class NamedSubquery(query : SelectExpr, name : String) extends AliasedRelExpr(qu
   override def bindingToNameSQL = "("+query.toSQL+") AS `"+name+"`"
 }
 
-class LimitedSelectExpr(columns : Seq[NamedColExpr[_]], from : FromExpr, whereCond : ColExpr[Boolean], orderBy : Seq[OrderExpr], val limit : Int, val offset : Int) extends SelectExpr(columns, from, whereCond, orderBy) {
+class LimitedSelectExpr(columns : Seq[NamedColExpr[_,_ <: NullStatus]], from : FromExpr, whereCond : ColExpr[Boolean,MaybeNull], orderBy : Seq[OrderExpr], val limit : Int, val offset : Int) extends SelectExpr(columns, from, whereCond, orderBy) {
   // Adding extra 'where' clauses don't actually commute, semantically, with a limit clause.
   // So this ensures we're wrapped up as a subquery first.
   // If you want to slip extra conditions inside the limit, save the limit til last!
-  override def where(condition : ColExpr[Boolean]) = asFromExpr.where(condition)
+  override def where(condition : ColExpr[Boolean,MaybeNull]) = asFromExpr.where(condition)
 
   override def toSQL = super.toSQL + " LIMIT "+limit+" OFFSET "+offset
 }

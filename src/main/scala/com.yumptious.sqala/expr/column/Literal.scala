@@ -1,15 +1,23 @@
 package com.yumptious.sqala.expr.column
 
-abstract class Literal[A](val value : A) extends ColExpr[A] {}
+trait Literal[A,N <: NullStatus] extends ColExpr[A,N] {}
 
-class StringLiteral(value : String) extends Literal[String](value) with StringColExpr {
+class NullLiteral[A] extends Literal[A,MaybeNull] {
+  def toSQL = "NULL"
+}
+
+class StringLiteral[N <: NullStatus](value : String) extends Literal[String,N] with StringOps[N] {
+  if (value eq null) throw new NullPointerException("StringLiteral: value may not eq null. Use NullLiteral[String] instead")
+  val self = this
   def toSQL = "'" + value.toString.replace("\\", "\\\\").replace("'", "\\'") + "'"
 }
 
-class NumericLiteral[A](value : A) extends Literal[A](value) with NumericColExpr[A] {
+class NumericLiteral[A,N <: NullStatus](value : A) extends Literal[A,N] with NumericOps[A,N] {
+  val self = this
   def toSQL = value.toString
 }
 
-class BooleanLiteral(value : Boolean) extends Literal[Boolean](value) with BooleanColExpr {
+class BooleanLiteral[N <: NullStatus](value : Boolean) extends Literal[Boolean,N] with BooleanOps[N] {
+  val self = this
   def toSQL = value.toString
 }

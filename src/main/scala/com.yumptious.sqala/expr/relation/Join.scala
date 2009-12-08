@@ -14,7 +14,7 @@ trait FromExpr extends RelExpr {
 class NamedRelFromExpr(val table : NamedRelExpr) extends FromExpr {
   def toSQL = table.bindingToNameSQL
   def columns = table.columns
-  def getColumn[A](name : String) = table.getColumn[A](name)
+  def getColumn[A,N <: NullStatus](name : String) = table.getColumn[A,N](name)
   def tables = Seq(table)
 }
 
@@ -23,15 +23,15 @@ class NamedRelFromExpr(val table : NamedRelExpr) extends FromExpr {
 class ProductFromExpr(val left : FromExpr, val right : FromExpr) extends FromExpr {
   def toSQL = left.toSQL + ", " + right.toSQL
   def columns = left.columns ++ right.columns
-  def getColumn[A](name : String) = left.getColumn[A](name) orElse right.getColumn[A](name)
+  def getColumn[A,N <: NullStatus](name : String) = left.getColumn[A,N](name) orElse right.getColumn[A,N](name)
   def tables = left.tables ++ right.tables
 }
 
 // A join with an 'on' clause
-abstract class JoinFromExpr(left : FromExpr, right : FromExpr, val on : ColExpr[Boolean], val joinType : String) extends ProductFromExpr(left, right) {
+abstract class JoinFromExpr(left : FromExpr, right : FromExpr, val on : ColExpr[Boolean,MaybeNull], val joinType : String) extends ProductFromExpr(left, right) {
   override def toSQL = left.toSQL + " " + joinType + " " + right.toSQL + " ON " + on.toSQL
 }
-class InnerJoinFromExpr(left : FromExpr, right : FromExpr, on : ColExpr[Boolean]) extends JoinFromExpr(left, right, on, "INNER JOIN") {}
-class LeftOuterJoinFromExpr(left : FromExpr, right : FromExpr, on : ColExpr[Boolean]) extends JoinFromExpr(left, right, on, "LEFT OUTER JOIN") {}
-class RightOuterJoinFromExpr(left : FromExpr, right : FromExpr, on : ColExpr[Boolean]) extends JoinFromExpr(left, right, on, "RIGHT OUTER JOIN") {}
-class OuterJoinFromExpr(left : FromExpr, right : FromExpr, on : ColExpr[Boolean]) extends JoinFromExpr(left, right, on, "OUTER JOIN") {}
+class InnerJoinFromExpr(left : FromExpr, right : FromExpr, on : ColExpr[Boolean,MaybeNull]) extends JoinFromExpr(left, right, on, "INNER JOIN") {}
+class LeftOuterJoinFromExpr(left : FromExpr, right : FromExpr, on : ColExpr[Boolean,MaybeNull]) extends JoinFromExpr(left, right, on, "LEFT OUTER JOIN") {}
+class RightOuterJoinFromExpr(left : FromExpr, right : FromExpr, on : ColExpr[Boolean,MaybeNull]) extends JoinFromExpr(left, right, on, "RIGHT OUTER JOIN") {}
+class OuterJoinFromExpr(left : FromExpr, right : FromExpr, on : ColExpr[Boolean,MaybeNull]) extends JoinFromExpr(left, right, on, "OUTER JOIN") {}

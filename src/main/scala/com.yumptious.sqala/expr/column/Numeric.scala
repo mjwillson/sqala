@@ -3,20 +3,18 @@ package com.yumptious.sqala.expr.column
 // Expressions applying to numeric columns.
 // an implicit conversion will give you NumericOps on a ColExpr[A] for numeric value types A
 
-trait NumericOps[A] {
-  protected val self : ColExpr[A]
+trait NumericOps[A,N <: NullStatus] {
+  protected val self : ColExpr[A,N]
 
-  def +(other : ColExpr[A]) = new PlusOp(self, other)
-  def -(other : ColExpr[A]) = new MinusOp(self, other)
-  def unary_-() = new UnaryMinusOp(self)
-  def *(other : ColExpr[A]) = new TimesOp(self, other)
-  def /(other : ColExpr[A]) = new DivideOp(self, other)
+  def +[ON <: NullStatus](other : ColExpr[A,ON]) = new PlusOp[A,N,ON](self, other)
+  def -[ON <: NullStatus](other : ColExpr[A,ON]) = new MinusOp[A,N,ON](self, other)
+  def unary_-() = new UnaryMinusOp[A,N](self)
+  def *[ON <: NullStatus](other : ColExpr[A,ON]) = new TimesOp[A,N,ON](self, other)
+  def /[ON <: NullStatus](other : ColExpr[A,ON]) = new DivideOp[A,N,ON](self, other)
 }
 
-trait NumericColExpr[A] extends ColExpr[A] with NumericOps[A] {val self = this}
-
-class PlusOp[A](a : ColExpr[A], b : ColExpr[A]) extends InfixBinaryOp[A,A,A]("+",a,b) with NumericColExpr[A] {}
-class MinusOp[A](a : ColExpr[A], b : ColExpr[A]) extends InfixBinaryOp[A,A,A]("-",a,b) with NumericColExpr[A] {}
-class TimesOp[A](a : ColExpr[A], b : ColExpr[A]) extends InfixBinaryOp[A,A,A]("*",a,b) with NumericColExpr[A] {}
-class DivideOp[A](a : ColExpr[A], b : ColExpr[A]) extends InfixBinaryOp[A,A,A]("/",a,b) with NumericColExpr[A] {}
-class UnaryMinusOp[A](a : ColExpr[A]) extends PrefixUnaryOp[A,A]("-",a) with NumericColExpr[A] {}
+class PlusOp[T,AN <: NullStatus,BN <: NullStatus](a : ColExpr[T,AN], b : ColExpr[T,BN]) extends InfixBinaryOp[T,AN,T,BN,T]("+",a,b)
+class MinusOp[T,AN <: NullStatus,BN <: NullStatus](a : ColExpr[T,AN], b : ColExpr[T,BN]) extends InfixBinaryOp[T,AN,T,BN,T]("-",a,b)
+class TimesOp[T,AN <: NullStatus,BN <: NullStatus](a : ColExpr[T,AN], b : ColExpr[T,BN]) extends InfixBinaryOp[T,AN,T,BN,T]("*",a,b)
+class DivideOp[T,AN <: NullStatus,BN <: NullStatus](a : ColExpr[T,AN], b : ColExpr[T,BN]) extends InfixBinaryOp[T,AN,T,BN,T]("/",a,b)
+class UnaryMinusOp[T,AN <: NullStatus](a : ColExpr[T,AN]) extends PrefixUnaryOp[T,AN,T]("-",a)
