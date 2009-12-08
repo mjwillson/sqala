@@ -9,7 +9,7 @@ import com.yumptious.sqala.expr.relation._
 trait ColExpr[A] extends Expr {
   def toSQL : String
   override def toString = toSQL
-  
+
   def is(other : ColExpr[A]) = new EqualsOp(this, other)
   def ===(other : ColExpr[A]) = new EqualsOp(this, other)
   def isNot(other : ColExpr[A]) = new NotEqualsOp(this, other)
@@ -18,10 +18,12 @@ trait ColExpr[A] extends Expr {
   def <=(other : ColExpr[A]) = new LessThanEqualsOp(this, other)
   def >(other : ColExpr[A]) = new GreaterThanOp(this, other)
   def >=(other : ColExpr[A]) = new GreaterThanEqualsOp(this, other)
-  
+
   def as(name : String) = new AliasColExpr[A](this, name)
   def asc : OrderExpr = new OrderExpr(this, true)
   def desc : OrderExpr = new OrderExpr(this, false)
+
+  def ifNull(other : ColExpr[A]) = new IfNullOp(this, other)
 }
 
 // Trait for a column expression which is bound to a particular name
@@ -38,7 +40,7 @@ class AliasColExpr[A](val colExpr : ColExpr[A], val name : String) extends Named
 // Used (for example) for a column of a table, or of a named subquery
 class Column[A](val table : NamedRelExpr, val name : String) extends NamedColExpr[A] {
   def toSQL = table.nameSQL + ".`" + name + "`"
-  
+
   // Assignment expression of a value ColExpr to a Column. For use with Insert and Update
   def :=[V <: ColExpr[A]](value : V) = new ColumnAssignment[A, V](this, value)
   /* this would be covered by the above, it's just given so that an implicit Literal can be
@@ -53,3 +55,5 @@ class LessThanOp[A](a : ColExpr[A], b : ColExpr[A]) extends InfixBinaryOp[A,A,Bo
 class LessThanEqualsOp[A](a : ColExpr[A], b : ColExpr[A]) extends InfixBinaryOp[A,A,Boolean]("<=",a,b) with BooleanColExpr {}
 class GreaterThanOp[A](a : ColExpr[A], b : ColExpr[A]) extends InfixBinaryOp[A,A,Boolean](">",a,b) with BooleanColExpr {}
 class GreaterThanEqualsOp[A](a : ColExpr[A], b : ColExpr[A]) extends InfixBinaryOp[A,A,Boolean](">=",a,b) with BooleanColExpr {}
+
+class IfNullOp[A](a : ColExpr[A], b : ColExpr[A]) extends FunctionOp2[A,A,A]("IFNULL",a,b) {}
