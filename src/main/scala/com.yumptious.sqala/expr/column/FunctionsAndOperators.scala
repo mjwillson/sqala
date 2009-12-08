@@ -21,6 +21,10 @@ abstract class PrefixUnaryOp[A,B](val name : String, a : ColExpr[A]) extends Una
   def toSQL = name + " " + _1.toSQL
 }
 
+abstract class SuffixUnaryOp[A,B](val name : String, a : ColExpr[A]) extends UnaryOp[A,B](a) {
+  def toSQL = _1.toSQL + " " + name
+}
+
 abstract class FunctionOp1[A,B](val name : String, a : ColExpr[A]) extends UnaryOp[A,B](a) with FunctionOp {}
 abstract class FunctionOp2[A,B,C](val name : String, a : ColExpr[A], b : ColExpr[B]) extends BinaryOp[A,B,C](a,b) with FunctionOp {}
 abstract class FunctionOp3[A,B,C,D](val name : String, a : ColExpr[A], b : ColExpr[B], c : ColExpr[C]) extends (ColExpr[A],ColExpr[B],ColExpr[C])(a,b,c) with ColExpr[D] with FunctionOp {}

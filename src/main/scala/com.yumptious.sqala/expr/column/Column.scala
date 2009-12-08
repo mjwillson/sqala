@@ -24,6 +24,9 @@ trait ColExpr[A] extends Expr {
   def desc : OrderExpr = new OrderExpr(this, false)
 
   def ifNull(other : ColExpr[A]) = new IfNullOp(this, other)
+
+  def isNull = new IsNullOp(this)
+  def isNotNull = new IsNotNullOp(this)
 }
 
 // Trait for a column expression which is bound to a particular name
@@ -57,3 +60,5 @@ class GreaterThanOp[A](a : ColExpr[A], b : ColExpr[A]) extends InfixBinaryOp[A,A
 class GreaterThanEqualsOp[A](a : ColExpr[A], b : ColExpr[A]) extends InfixBinaryOp[A,A,Boolean](">=",a,b) with BooleanColExpr {}
 
 class IfNullOp[A](a : ColExpr[A], b : ColExpr[A]) extends FunctionOp2[A,A,A]("IFNULL",a,b) {}
+class IsNullOp[A](a : ColExpr[A]) extends SuffixUnaryOp[A,Boolean]("IS NULL",a) {}
+class IsNotNullOp[A](a : ColExpr[A]) extends SuffixUnaryOp[A,Boolean]("IS NOT NULL",a) {}
