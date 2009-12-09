@@ -27,6 +27,9 @@ trait ColExpr[A] extends Expr {
 
   def isNull = new IsNullOp(this)
   def isNotNull = new IsNotNullOp(this)
+  
+  def in(values : Seq[ColExpr[A]]) = new InOp(this, values)
+  def notIn(values : Seq[ColExpr[A]]) = new NotInOp(this, values)
 }
 
 // Trait for a column expression which is bound to a particular name
@@ -62,3 +65,10 @@ class GreaterThanEqualsOp[A](a : ColExpr[A], b : ColExpr[A]) extends InfixBinary
 class IfNullOp[A](a : ColExpr[A], b : ColExpr[A]) extends FunctionOp2[A,A,A]("IFNULL",a,b) {}
 class IsNullOp[A](a : ColExpr[A]) extends SuffixUnaryOp[A,Boolean]("IS NULL",a) {}
 class IsNotNullOp[A](a : ColExpr[A]) extends SuffixUnaryOp[A,Boolean]("IS NOT NULL",a) {}
+
+class InOp[A](a : ColExpr[A], values : Seq[ColExpr[A]]) extends BooleanColExpr {
+  def toSQL = a.toSQL + " IN " + values.mkString("(", ", ", ")")
+}
+class NotInOp[A](a : ColExpr[A], values : Seq[ColExpr[A]]) extends BooleanColExpr {
+  def toSQL = a.toSQL + " NOT IN " + values.mkString("(", ", ", ")")
+}
