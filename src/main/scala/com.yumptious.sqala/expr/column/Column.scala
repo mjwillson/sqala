@@ -30,6 +30,9 @@ trait ColExpr[A] extends Expr {
   
   def in(values : Seq[ColExpr[A]]) = new InOp(this, values)
   def notIn(values : Seq[ColExpr[A]]) = new NotInOp(this, values)
+
+  def in(relExpr : RelExpr) = new InSubqueryOp(this, relExpr.asQueryExpr)
+  def notIn(relExpr : RelExpr) = new NotInSubqueryOp(this, relExpr.asQueryExpr)
 }
 
 // Trait for a column expression which is bound to a particular name
@@ -66,9 +69,9 @@ class IfNullOp[A](a : ColExpr[A], b : ColExpr[A]) extends FunctionOp2[A,A,A]("IF
 class IsNullOp[A](a : ColExpr[A]) extends SuffixUnaryOp[A,Boolean]("IS NULL",a) {}
 class IsNotNullOp[A](a : ColExpr[A]) extends SuffixUnaryOp[A,Boolean]("IS NOT NULL",a) {}
 
-class InOp[A](a : ColExpr[A], values : Seq[ColExpr[A]]) extends BooleanColExpr {
+class InOp[A](val a : ColExpr[A], val values : Seq[ColExpr[A]]) extends BooleanColExpr {
   def toSQL = a.toSQL + " IN " + values.mkString("(", ", ", ")")
 }
-class NotInOp[A](a : ColExpr[A], values : Seq[ColExpr[A]]) extends BooleanColExpr {
+class NotInOp[A](val a : ColExpr[A], val values : Seq[ColExpr[A]]) extends BooleanColExpr {
   def toSQL = a.toSQL + " NOT IN " + values.mkString("(", ", ", ")")
 }

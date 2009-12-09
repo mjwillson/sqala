@@ -1,5 +1,7 @@
 package com.yumptious.sqala.expr.column
 
+import com.yumptious.sqala.expr.relation._
+
 object Implicits {
   implicit def booleanOps(b : ColExpr[Boolean]) : BooleanOps = new BooleanOps {val self = b}
 
@@ -27,4 +29,6 @@ object Implicits {
   implicit def optionLongLiteral(a : Option[Long]) : Literal[Long] = new NumericLiteral[Long](a)
   implicit def optionFloatLiteral(a : Option[Float]) : Literal[Float] = new NumericLiteral[Float](a)
   implicit def optionDoubleLiteral(a : Option[Double]) : Literal[Double] = new NumericLiteral[Double](a)
+  
+  implicit def relExprToColumnSubqueryExpr[A](r : RelExpr) = new SubqueryOp[A](r.asQueryExpr)
 }

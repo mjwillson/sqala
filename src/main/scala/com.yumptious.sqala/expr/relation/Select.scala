@@ -86,7 +86,7 @@ class NamedSubquery(query : QueryExpr, name : String) extends AliasedRelExpr(que
 }
 
 class LimitedQueryExpr(val query : QueryExpr, val limit : Int, val offset : Int) extends QueryExpr {
-  def toSQL = query.toSQL + " LIMIT " + limit + " OFFSET " + offset
+  def toSQL = query.toSQL + " LIMIT " + limit + (if (offset > 0) " OFFSET " + offset else "")
   def getColumn[A](n : String) = query.getColumn[A](n)
   def columns = query.columns
   

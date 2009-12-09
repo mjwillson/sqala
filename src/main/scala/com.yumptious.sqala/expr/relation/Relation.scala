@@ -75,6 +75,10 @@ trait RelExpr extends Expr {
   def update(pairs : ColumnAssignment[_, _]*) = new Update(asFromExpr, pairs, null)
   def delete() = new Delete(asFromExpr, null)
   def delete(tables : NamedRelExpr*) = new Delete(asFromExpr, tables, null)
+
+  // subquery column expressions
+  def exists = new ExistsSubqueryOp(asQueryExpr)
+  def notExists = new NotExistsSubqueryOp(asQueryExpr)
 }
 
 // A relational expression which is bound to a particular name.
