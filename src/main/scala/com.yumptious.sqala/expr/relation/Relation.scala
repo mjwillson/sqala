@@ -5,8 +5,8 @@ import com.yumptious.sqala.expr.column._
 import com.yumptious.sqala.expr.command._
 
 // Abstract trait for a relational (in as much as SQL is truly relational) expression.
-// More pragmatically: something which can be wrapped up and executed as an SQL select
-// statement (via 'asSelect').
+// More pragmatically: something which can be wrapped up and executed as an SQL query
+// statement (via 'asQueryExpr').
 // Has a set of named columns, and supports various relational operations.
 //
 // We don't attempt full type-safety for columns of RelExpr. ColExpr[A]'s are stored
@@ -22,23 +22,33 @@ trait RelExpr extends Expr {
   def column[A](name : String) : NamedColExpr[A] = getColumn[A](name).get
   def getColumn[A](name : String) : Option[NamedColExpr[A]]
   
-  def as(name : String) : NamedRelExpr = new NamedSubquery(asSelect, name)
+  def as(name : String) : NamedRelExpr = new NamedSubquery(asQueryExpr, name)
 
   def asFromExpr : FromExpr
-  def asSelect : SelectExpr = new SelectExpr(columns, asFromExpr)
+  def asQueryExpr : QueryExpr = new SelectExpr(columns, asFromExpr)
   
   def select(columns : NamedColExpr[_]*) = new SelectExpr(columns, asFromExpr)
   def where(condition : ColExpr[Boolean]) : SelectExpr = new SelectExpr(columns, asFromExpr, condition)
   
-  def join(other : RelExpr) = new ProductFromExpr(asFromExpr, other.asFromExpr)
-  def innerJoin(other : RelExpr, on : ColExpr[Boolean]) = new InnerJoinFromExpr(asFromExpr, other.asFromExpr, on)
-  def leftOuterJoin(other : RelExpr, on : ColExpr[Boolean]) = new LeftOuterJoinFromExpr(asFromExpr, other.asFromExpr, on)
-  def rightOuterJoin(other : RelExpr, on : ColExpr[Boolean]) = new RightOuterJoinFromExpr(asFromExpr, other.asFromExpr, on)
-  def outerJoin(other : RelExpr, on : ColExpr[Boolean]) = new OuterJoinFromExpr(asFromExpr, other.asFromExpr, on)
+  protected def joinedTo(other : RelExpr, addFromExpr : FromExpr => FromExpr) : RelExpr = addFromExpr(asFromExpr)
+  def join(other : RelExpr) : RelExpr = joinedTo(other, _ join other)
+  def innerJoin(other : RelExpr, on : ColExpr[Boolean]) : RelExpr = joinedTo(other, _.innerJoin(other,on))
+  def leftOuterJoin(other : RelExpr, on : ColExpr[Boolean]) : RelExpr = joinedTo(other, _.leftOuterJoin(other,on))
+  def rightOuterJoin(other : RelExpr, on : ColExpr[Boolean]) : RelExpr = joinedTo(other, _.rightOuterJoin(other,on))
+  def outerJoin(other : RelExpr, on : ColExpr[Boolean]) : RelExpr = joinedTo(other, _.outerJoin(other,on))
 
   def join(other : RelExpr, on : ColExpr[Boolean]) = innerJoin(other, on)
   def leftJoin(other : RelExpr, on : ColExpr[Boolean]) = leftOuterJoin(other, on)
   def rightJoin(other : RelExpr, on : ColExpr[Boolean]) = rightOuterJoin(other, on)
+  
+  def distinct : RelExpr = new DistinctSelectExpr(columns, asFromExpr, null, null)
+  
+  def union(other : RelExpr) = new UnionExpr(asQueryExpr, other.asQueryExpr, true)
+  def unionAll(other : RelExpr) = new UnionExpr(asQueryExpr, other.asQueryExpr, false)
+  def intersect(other : RelExpr) = new IntersectExpr(asQueryExpr, other.asQueryExpr, true)
+  def intersectAll(other : RelExpr) = new IntersectExpr(asQueryExpr, other.asQueryExpr, false)
+  def minus(other : RelExpr) = new MinusExpr(asQueryExpr, other.asQueryExpr, true)
+  def minusAll(other : RelExpr) = new MinusExpr(asQueryExpr, other.asQueryExpr, false)
   
   def groupBy(groupByColumns : NamedColExpr[_]*) = new AggregateSelectExpr(groupByColumns, groupByColumns, asFromExpr, null, null, null)
   def selectGroupedBy(columns : Seq[NamedColExpr[_]], groupByColumns : Seq[NamedColExpr[_]]) : AggregateSelectExpr = {
@@ -59,8 +69,8 @@ trait RelExpr extends Expr {
   def selectAvg[A](column : ColExpr[A]) = selectAggregate(Aggregates.avg(column).as("avg"))
   def selectStdDev[A](column : ColExpr[A]) = selectAggregate(Aggregates.stdDev(column).as("stdDev"))
   
-  def limit(theLimit : Int, offset : Int) : LimitedSelectExpr = asSelect.limit(theLimit, offset)
-  def limit(theLimit : Int) : LimitedSelectExpr = limit(theLimit, 0)
+  def limit(theLimit : Int, offset : Int) : LimitedQueryExpr = new LimitedQueryExpr(asQueryExpr, theLimit, offset)
+  def limit(theLimit : Int) : LimitedQueryExpr = limit(theLimit, 0)
 
   def update(pairs : ColumnAssignment[_, _]*) = new Update(asFromExpr, pairs, null)
   def delete() = new Delete(asFromExpr, null)

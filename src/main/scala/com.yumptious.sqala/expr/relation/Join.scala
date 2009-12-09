@@ -7,6 +7,14 @@ import com.yumptious.sqala.expr.column._
 // Consists of some tree of joins (including ", " the cartesian product join) between NamedRelExpr's.
 trait FromExpr extends RelExpr {
   def asFromExpr = this
+  
+  // overriding these just to narrow the return types - is there a less copy-paste way to do this?
+  override def join(other : RelExpr) = new ProductFromExpr(this, other.asFromExpr)
+  override def innerJoin(other : RelExpr, on : ColExpr[Boolean]) = new InnerJoinFromExpr(this, other.asFromExpr, on)
+  override def leftOuterJoin(other : RelExpr, on : ColExpr[Boolean]) = new LeftOuterJoinFromExpr(this, other.asFromExpr, on)
+  override def rightOuterJoin(other : RelExpr, on : ColExpr[Boolean]) = new RightOuterJoinFromExpr(this, other.asFromExpr, on)
+  override def outerJoin(other : RelExpr, on : ColExpr[Boolean]) = new OuterJoinFromExpr(this, other.asFromExpr, on)
+  
   def tables : Seq[NamedRelExpr]
 }
 
